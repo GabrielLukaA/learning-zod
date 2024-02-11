@@ -1,6 +1,6 @@
 "use client";
-
-import { useForm, useFieldArray } from "react-hook-form";
+import { Form } from "../components/Form";
+import { useForm, useFieldArray, FormProvider } from "react-hook-form";
 import { z } from "zod";
 // Essa lib também consegue trabalhar com yup e joi, duas libs concorrentes do zod
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -67,6 +67,11 @@ export default function Home() {
       .min(2, "Insira pelo menos duas tecnologias."),
   });
 
+  const createUserForm = useForm<CreateUserFormData>({
+    //Esse resolver serve para o formulário "compreender" os campos esperados!
+    resolver: zodResolver(createUserFormSchema),
+  });
+
   // Infer é básicamente uma forma de definir de forma automática
   type CreateUserFormData = z.infer<typeof createUserFormSchema>;
 
@@ -79,10 +84,7 @@ export default function Home() {
     handleSubmit,
     control,
     formState: { errors },
-  } = useForm<CreateUserFormData>({
-    //Esse resolver serve para o formulário "compreender" os campos esperados!
-    resolver: zodResolver(createUserFormSchema),
-  });
+  } = createUserForm;
 
   // Aqui se subentende, fields append e remove como os campos em si, a adição e a remoção respectivamente!
   const { fields, append, remove } = useFieldArray({
@@ -119,124 +121,95 @@ export default function Home() {
     });
   }
 
+  // Comentário a respeito dos ComponentProps que estou sempre passando, utilizando essa interface eu digo que a label recebe todas as
+  // propriedades que o elemento html label possui, assim usando da desestruturação para informar ao componente as props sem precisar ir
+  // atributo por atributo!
   return (
     <div className="flex w-screen flex-col gap-10 h-screen justify-center items-center bg-zinc-800">
-      <form
-        onSubmit={handleSubmit(createUser)}
-        className="flex bg-zinc-900 flex-col gap-4 max-w-sm w-full p-8 rounded-lg "
-      >
-        <div className="flex flex-col gap-1">
-          <label className="text-white" htmlFor="avatar">
-            Avatar
-          </label>
-          <input
-            type="file"
-            className="py-2 bg-zinc-950 shadow-lg text-white rounded-lg"
-            {...register("avatar")}
-          />
-          {errors.avatar && (
-            <span className=" text-red-500 text-sm py-2">
-              {errors.avatar.message}
-            </span>
-          )}
-        </div>
-        <div className="flex flex-col gap-1">
-          <label className="text-white" htmlFor="name">
-            Name
-          </label>
-          <input
-            type="name"
-            className="py-2 bg-zinc-950 shadow-lg text-white rounded-lg"
-            {...register("name")}
-          />
-          {errors.name && (
-            <span className=" text-red-500 text-sm py-2">
-              {errors.name.message}
-            </span>
-          )}
-        </div>
-        <div className="flex flex-col gap-1">
-          <label className="text-white" htmlFor="email">
-            Email
-          </label>
-          <input
-            type="email"
-            className="py-2 bg-zinc-950 shadow-lg text-white rounded-lg"
-            {...register("email")}
-          />
-          {errors.email && (
-            <span className=" text-red-500 text-sm py-2">
-              {errors.email.message}
-            </span>
-          )}
-        </div>
-        <div className="flex flex-col gap-1">
-          <label className="text-white" htmlFor="password">
-            Password
-          </label>
-          <input
-            type="password"
-            className="py-2 bg-zinc-950 shadow-lg text-white rounded-lg"
-            {...register("password")}
-          />
-        </div>
-
-        <div className="flex flex-col gap-1">
-          <label
-            className="text-white flex items-center justify-between"
-            htmlFor=""
-          >
-            Tecnologias
-            <button
-              type="button"
-              onClick={addNewTech}
-              className="text-sm text-emerald-800"
-            >
-              Add tech
-            </button>
-          </label>
-        </div>
-        {/* Aqui eu realizo um map pelas tecnologias presentes no formulário mostrando-as conforme o indice, como pode ser visto na 
-parte do register */}
-        {fields.map((field, index) => {
-          return (
-            <div className="flex w-full gap-4" key={field.id}>
-              <input
-                type="text"
-                className="py-2  bg-zinc-950 shadow-lg text-white rounded-lg"
-                {...register(`techs.${index}.title`)}
-              />
-              {errors?.techs?.[index]?.title && (
-                <span className=" text-red-500 text-sm py-2">
-                  {errors.techs[index]?.title?.message}
-                </span>
-              )}
-              <input
-                type="number"
-                className="py-2 flex-1 flex min-w-min w-full  bg-zinc-950 shadow-lg text-white rounded-lg"
-                {...register(`techs.${index}.knowLedge`)}
-              />
-
-              {/* {errors?.techs?.[index]?.knowLedge && (
-                <span className=" text-red-500 text-sm py-2">
-                  {errors.techs[index]?.knowLedge?.message}
-                </span>
-              )} */}
-            </div>
-          );
-        })}
-        {errors.techs && (
-          <span className=" text-red-500 text-sm py-2">
-            {errors.techs.message}
-          </span>
-        )}
-        <button
-          type="submit"
-          className="py-3 text-white bg-emerald-800 hover:bg-emerald-950 shadow-lg rounded-lg"
+      <FormProvider {...createUserForm}>
+        <form
+          onSubmit={handleSubmit(createUser)}
+          className="flex bg-zinc-900 flex-col gap-4 max-w-sm w-full p-8 rounded-lg "
         >
-          Salvar
-        </button>
-      </form>
+          <Form.Field>
+            <Form.Label htmlFor="avatar"> Avatar</Form.Label>
+            <Form.Input name="avatar" type="file" />
+            <Form.ErrorMessage field="avatar" />
+          </Form.Field>
+
+          {/* Jeito que foi feito primeiramente */}
+          <Form.Field>
+            <label className="text-white" htmlFor="name">
+              Name
+            </label>
+            <input
+              type="name"
+              className="py-2 bg-zinc-950 shadow-lg text-white rounded-lg"
+              {...register("name")}
+            />
+            {errors.name && (
+              <span className=" text-red-500 text-sm py-2">
+                {errors.name.message}
+              </span>
+            )}
+          </Form.Field>
+
+          <Form.Field>
+            <Form.Label htmlFor="email">Email</Form.Label>
+            <Form.Input name="email" type="email" />
+            <Form.ErrorMessage field="email" />
+          </Form.Field>
+
+          <Form.Field>
+            <Form.Label htmlFor="password">Password</Form.Label>
+            <Form.Input name="password" type="password" />
+          </Form.Field>
+
+          <Form.Field>
+            <Form.Label>
+              Tecnologias
+              <Form.Button type="button" onClick={addNewTech}>
+                Add tech
+              </Form.Button>
+            </Form.Label>
+          </Form.Field>
+          {/* Aqui eu realizo um map pelas tecnologias presentes no formulário mostrando-as conforme o indice, como pode ser visto na 
+parte do register */}
+          {fields.map((field, index) => {
+            return (
+              <div className="flex w-full gap-4" key={field.id}>
+                <input
+                  type="text"
+                  className="py-2  bg-zinc-950 shadow-lg text-white rounded-lg"
+                  {...register(`techs.${index}.title`)}
+                />
+                {errors?.techs?.[index]?.title && (
+                  <span className=" text-red-500 text-sm py-2">
+                    {errors.techs[index]?.title?.message}
+                  </span>
+                )}
+                {/* <Form.Input type="number" name={`techs.${index}.knowLedge`}></Form.Input> */}
+                <input
+                  type="number"
+                  className="py-2 flex-1 flex min-w-min w-full  bg-zinc-950 shadow-lg text-white rounded-lg"
+                  {...register(`techs.${index}.knowLedge`)}
+                />
+              </div>
+            );
+          })}
+          {errors.techs && (
+            <span className=" text-red-500 text-sm py-2">
+              {errors.techs.message}
+            </span>
+          )}
+          <button
+            type="submit"
+            className="py-3 text-white bg-emerald-800 hover:bg-emerald-950 shadow-lg rounded-lg"
+          >
+            Salvar
+          </button>
+        </form>
+      </FormProvider>
       <pre className="text-white">{output}</pre>
     </div>
   );
