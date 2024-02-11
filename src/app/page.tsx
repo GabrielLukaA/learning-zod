@@ -97,8 +97,15 @@ export default function Home() {
 
   async function createUser(data: CreateUserFormData) {
     let formData = new FormData();
-    // formData.append("file", data.avatar, data.avatar?.name);
-    formData.append("user", JSON.stringify(data));
+    formData.append("file", data.avatar!);
+    formData.append(
+      "user",
+      JSON.stringify({
+        name: data.name,
+        email: data.email,
+        password: data.password,
+      })
+    );
     console.log(data.avatar);
     await axios.post("http://localhost:9999/user/file", formData);
     setOutput(JSON.stringify(data, null, 2));
